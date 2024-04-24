@@ -10,6 +10,28 @@ To develop a hardhat contract project, we always need some frequently used depen
 npm install
 ```
 
+### Commands
+
+#### Compile & Generate Types
+
+```shell
+npm run compile
+```
+
+#### Test
+
+```shell
+npm run test
+```
+
+#### Deploy Contract
+
+Currently, we use [Hardhat Ignition](https://hardhat.org/ignition/docs/getting-started#overview) to help deploy & verify contract.
+
+```shell
+npx hardhat ignition deploy ./ignition/modules/[YOUR_DEPLOY_MODULE].ts --network <your-network>
+```
+
 ### Get extensions
 
 Recommend extensions are listed in the file `./.vscode/extensions.json`. If you go to vscode extension list, you could see all recommended extensions directly.
