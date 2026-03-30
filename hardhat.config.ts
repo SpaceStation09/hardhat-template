@@ -1,5 +1,5 @@
-import "@nomicfoundation/hardhat-toolbox";
-import { HardhatUserConfig } from "hardhat/config";
+import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
+import { defineConfig } from "hardhat/config";
 import {
   getHardhatNetworkConfig,
   HardhatGasReporterConfig,
@@ -11,7 +11,8 @@ let solidity = HardhatSolidityConfig;
 solidity.version = "0.8.24";
 const gasReporter = HardhatGasReporterConfig;
 
-const config: HardhatUserConfig = {
+const config = defineConfig({
+  plugins: [hardhatToolboxMochaEthers],
   networks,
   solidity,
   gasReporter,
@@ -20,6 +21,6 @@ const config: HardhatUserConfig = {
     target: "ethers-v6",
     alwaysGenerateOverloads: false,
   },
-};
+});
 
 export default config;
