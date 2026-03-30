@@ -4,21 +4,19 @@ import {
   getHardhatNetworkConfig,
   HardhatGasReporterConfig,
   HardhatSolidityConfig,
-} from "./SmartContractProjectConfig/config";
+} from "./SmartContractProjectConfig/config.js";
 
 let networks = getHardhatNetworkConfig();
 let solidity = HardhatSolidityConfig;
 solidity.version = "0.8.24";
-const gasReporter = HardhatGasReporterConfig;
+void HardhatGasReporterConfig;
 
 const config = defineConfig({
   plugins: [hardhatToolboxMochaEthers],
   networks,
   solidity,
-  gasReporter,
   typechain: {
     outDir: "types",
-    target: "ethers-v6",
     alwaysGenerateOverloads: false,
   },
 });
