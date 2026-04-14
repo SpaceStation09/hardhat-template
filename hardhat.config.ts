@@ -1,4 +1,7 @@
-import hardhatToolboxMochaEthers from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
+import hardhatNetworkHelpers from "@nomicfoundation/hardhat-network-helpers";
+import hardhatNodeTestRunner from "@nomicfoundation/hardhat-node-test-runner";
+import hardhatViem from "@nomicfoundation/hardhat-viem";
+import hardhatViemAssertions from "@nomicfoundation/hardhat-viem-assertions";
 import { defineConfig } from "hardhat/config";
 import {
   getHardhatNetworkConfig,
@@ -12,13 +15,9 @@ solidity.version = "0.8.24";
 void HardhatGasReporterConfig;
 
 const config = defineConfig({
-  plugins: [hardhatToolboxMochaEthers],
+  plugins: [hardhatViem, hardhatViemAssertions, hardhatNodeTestRunner, hardhatNetworkHelpers],
   networks,
   solidity,
-  typechain: {
-    outDir: "types",
-    alwaysGenerateOverloads: false,
-  },
 });
 
 export default config;

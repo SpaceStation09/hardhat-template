@@ -11,27 +11,24 @@
   },
   "devDependencies": {
     "@dimensiondev/eslint-plugin": "^0.0.2-20220516081411-2649814",
-    "@nomicfoundation/hardhat-ethers": "^4.0.6",
-    "@nomicfoundation/hardhat-ignition": "^3.1.0",
-    "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.3",
-    "@types/chai": "^5.2.3",
-    "@types/chai-as-promised": "^8.0.2",
-    "@types/mocha": "^10.0.10",
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.3",
+    "@nomicfoundation/hardhat-node-test-runner": "^3.0.1",
+    "@nomicfoundation/hardhat-viem": "^3.0.0",
+    "@nomicfoundation/hardhat-viem-assertions": "^3.0.1",
     "@types/node": "^25.5.0",
     "@types/prettier": "^3.0.0",
     "@typescript-eslint/eslint-plugin": "^8.57.2",
     "@typescript-eslint/parser": "^8.57.2",
-    "chai": "^6.2.2",
     "cspell": "^9.7.0",
     "csv-parse": "^6.2.1",
     "dotenv": "^17.3.1",
     "eslint": "^8.57.1",
     "ethers": "^6.16.0",
-    "mocha": "^11.7.5",
     "prettier": "^3.8.1",
     "prettier-plugin-solidity": "^2.3.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "viem": "^2.38.5"
   },
   "dependencies": {
     "hardhat": "^3.2.0"

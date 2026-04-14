@@ -9,6 +9,6 @@
     "strictNullChecks": true,
     "skipLibCheck": true
   },
-  "include": ["./test", "./types", "./SmartContractProjectConfig", "./ignition"],
+  "include": ["./test", "./SmartContractProjectConfig", "./artifacts/**/*.d.ts"],
   "files": ["./hardhat.config.ts"]
 }

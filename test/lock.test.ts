@@ -1,109 +1,110 @@
-import { anyValue } from "@nomicfoundation/hardhat-ethers-chai-matchers/withArgs";
-import { expect } from "chai";
+import { anyValue } from "@nomicfoundation/hardhat-viem-assertions/predicates";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import hre from "hardhat";
 
+const { viem, networkHelpers } = await hre.network.connect();
+
 describe("Lock", function () {
-  async function deployOneYearLockFixture(connection: Awaited<ReturnType<typeof hre.network.connect>>) {
+  async function deployOneYearLockFixture() {
     const ONE_YEAR_IN_SECS = 365n * 24n * 60n * 60n;
     const ONE_GWEI = 1_000_000_000n;
 
-    const { ethers, networkHelpers } = connection;
+    const publicClient = await viem.getPublicClient();
+    const [owner, otherAccount] = await viem.getWalletClients();
 
     const lockedAmount = ONE_GWEI;
     const unlockTime = BigInt(await networkHelpers.time.latest()) + ONE_YEAR_IN_SECS;
 
-    const [owner, otherAccount] = await ethers.getSigners();
-    const Lock = await ethers.getContractFactory("Lock");
-    const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+    const lock = await viem.deployContract("Lock", [unlockTime], { value: lockedAmount });
 
-    return { lock, unlockTime, lockedAmount, owner, otherAccount };
+    return { lock, unlockTime, lockedAmount, owner, otherAccount, publicClient };
   }
 
   describe("Deployment", function () {
     it("Should set the right unlockTime", async function () {
-      const connection = await hre.network.connect();
-      const { lock, unlockTime } = await connection.networkHelpers.loadFixture(deployOneYearLockFixture);
+      const { lock, unlockTime } = await networkHelpers.loadFixture(deployOneYearLockFixture);
 
-      expect(await lock.unlockTime()).to.equal(unlockTime);
+      assert.equal(await lock.read.unlockTime(), unlockTime);
     });
 
     it("Should set the right owner", async function () {
-      const connection = await hre.network.connect();
-      const { lock, owner } = await connection.networkHelpers.loadFixture(deployOneYearLockFixture);
+      const { lock, owner } = await networkHelpers.loadFixture(deployOneYearLockFixture);
 
-      expect(await lock.owner()).to.equal(owner.address);
+      assert.equal((await lock.read.owner()).toLowerCase(), owner.account.address.toLowerCase());
     });
 
     it("Should receive and store the funds to lock", async function () {
-      const connection = await hre.network.connect();
-      const { lock, lockedAmount } = await connection.networkHelpers.loadFixture(deployOneYearLockFixture);
+      const { lock, lockedAmount, publicClient } = await networkHelpers.loadFixture(deployOneYearLockFixture);
 
-      expect(await connection.ethers.provider.getBalance(lock.target)).to.equal(lockedAmount);
+      assert.equal(await publicClient.getBalance({ address: lock.address }), lockedAmount);
     });
 
     it("Should fail if the unlockTime is not in the future", async function () {
-      const connection = await hre.network.connect();
-      const latestTime = await connection.networkHelpers.time.latest();
-      const Lock = await connection.ethers.getContractFactory("Lock");
+      const latestTime = await networkHelpers.time.latest();
 
-      await expect(Lock.deploy(latestTime, { value: 1n })).to.be.revertedWith("Unlock time should be in the future");
+      await viem.assertions.revertWith(
+        viem.deployContract("Lock", [BigInt(latestTime)], { value: 1n }),
+        "Unlock time should be in the future",
+      );
     });
   });
 
   describe("Withdrawals", function () {
     describe("Validations", function () {
       it("Should revert with the right error if called too soon", async function () {
-        const connection = await hre.network.connect();
-        const { lock } = await connection.networkHelpers.loadFixture(deployOneYearLockFixture);
+        const { lock } = await networkHelpers.loadFixture(deployOneYearLockFixture);
 
-        await expect(lock.withdraw()).to.be.revertedWith("You can't withdraw yet");
+        await viem.assertions.revertWith(lock.write.withdraw(), "You can't withdraw yet");
       });
 
       it("Should revert with the right error if called from another account", async function () {
-        const connection = await hre.network.connect();
-        const { lock, unlockTime, otherAccount } =
-          await connection.networkHelpers.loadFixture(deployOneYearLockFixture);
+        const { lock, unlockTime, otherAccount } = await networkHelpers.loadFixture(deployOneYearLockFixture);
 
-        await connection.networkHelpers.time.increaseTo(unlockTime);
+        await networkHelpers.time.increaseTo(unlockTime);
 
-        await expect(lock.connect(otherAccount).withdraw()).to.be.revertedWith("You aren't the owner");
+        await viem.assertions.revertWith(
+          lock.write.withdraw({ account: otherAccount.account }),
+          "You aren't the owner",
+        );
       });
 
       it("Shouldn't fail if the unlockTime has arrived and the owner calls it", async function () {
-        const connection = await hre.network.connect();
-        const { lock, unlockTime } = await connection.networkHelpers.loadFixture(deployOneYearLockFixture);
+        const { lock, unlockTime } = await networkHelpers.loadFixture(deployOneYearLockFixture);
 
-        await connection.networkHelpers.time.increaseTo(unlockTime);
+        await networkHelpers.time.increaseTo(unlockTime);
 
-        await lock.withdraw();
+        await lock.write.withdraw();
       });
     });
 
     describe("Events", function () {
       it("Should emit an event on withdrawals", async function () {
-        const connection = await hre.network.connect();
-        const { lock, unlockTime, lockedAmount } =
-          await connection.networkHelpers.loadFixture(deployOneYearLockFixture);
+        const { lock, unlockTime, lockedAmount } = await networkHelpers.loadFixture(deployOneYearLockFixture);
 
-        await connection.networkHelpers.time.increaseTo(unlockTime);
+        await networkHelpers.time.increaseTo(unlockTime);
 
-        await expect(lock.withdraw()).to.emit(lock, "Withdrawal").withArgs(lockedAmount, anyValue);
+        await viem.assertions.emitWithArgs(lock.write.withdraw(), lock, "Withdrawal", [lockedAmount, anyValue]);
       });
     });
 
     describe("Transfers", function () {
       it("Should transfer the funds to the owner", async function () {
-        const connection = await hre.network.connect();
-        const { lock, unlockTime, lockedAmount, owner } =
-          await connection.networkHelpers.loadFixture(deployOneYearLockFixture);
+        const { lock, unlockTime, lockedAmount, owner, publicClient } =
+          await networkHelpers.loadFixture(deployOneYearLockFixture);
 
-        await connection.networkHelpers.time.increaseTo(unlockTime);
+        await networkHelpers.time.increaseTo(unlockTime);
 
-        await expect(() => lock.withdraw()).to.changeEtherBalances(
-          connection.ethers,
-          [owner, lock],
-          [lockedAmount, -lockedAmount],
+        const ownerBalanceBefore = await publicClient.getBalance({ address: owner.account.address });
+        const hash = await lock.write.withdraw();
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        const ownerBalanceAfter = await publicClient.getBalance({ address: owner.account.address });
+
+        assert.equal(
+          ownerBalanceAfter + receipt.gasUsed * receipt.effectiveGasPrice - ownerBalanceBefore,
+          lockedAmount,
         );
+        assert.equal(await publicClient.getBalance({ address: lock.address }), 0n);
       });
     });
   });
